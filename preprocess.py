@@ -41,6 +41,20 @@ def normalize(X):
     return norm_data
 
 
+def getQ(pixels):
+    colors = np.zeros((22, 22))
+
+    for p in pixels:
+        a, b = p
+        colors[get_index(a), get_index(b)] = 1
+
+    return np.count_nonzero(colors)
+
+
+def get_index(num):
+    (num + 110) / 10
+
+
 def preprocess():
     # trainset, testset = download_data()
 
@@ -52,10 +66,30 @@ def preprocess():
 
     # torch.save(trainset_lab, './processed_data/trainset_lab.pt')
 
-    trainset_lab = torch.load('./processed_data/trainset_lab.pt')
-    # trainset_lab_norm = normalize(trainset_lab)
+    # trainset_lab = torch.load('./processed_data/trainset_lab.pt')
+    # # trainset_lab_norm = normalize(trainset_lab)
 
-    print(trainset_lab[0])
+    # ab_pairs0 = []
+
+    # count = 0
+    # for img in trainset_lab[:5000]:
+    #     for x in img[:, :, 1:]:
+    #         for y in x:
+    #             ab_pairs0.append(y)
+    #     count += 1
+    #     print(count)
+
+    # print(len(ab_pairs0))
+    # # print(ab_pairs[0])
+
+    # torch.save(ab_pairs0, './processed_data/ab_values5000.pt')
+
+    ab_values = torch.load('./processed_data/ab_values5000.pt')
+
+    print(len(ab_values))
+
+    # plt.scatter(a_vals, b_vals)
+    # plt.show()
 
     # mean = np.mean(np.mean(trainset_lab, axis=0))
     # std = np.std(np.std(trainset_lab, axis=0))

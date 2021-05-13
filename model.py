@@ -1,5 +1,5 @@
 import torch
-from torch.nn import BatchNorm2d, Linear, ReLU, CrossEntropyLoss, Sequential, Conv2d, MaxPool2d, Module, Softmax2d
+from torch.nn import BatchNorm2d, Linear, ReLU, CrossEntropyLoss, Sequential, Conv2d, MaxPool2d, Module, Softmax
 import torch.nn.functional as F
 
 
@@ -55,4 +55,14 @@ class Model:
             Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
             ReLU(inplace=True),
             BatchNorm2d(32),
+            # TO COLOR PROBABILITIES
+            Conv2d(32, 484, kernel_size=3, stride=1, padding=1),
         )
+
+        self.softmax = Softmax(dim=1)
+        self.final = Conv2d(484, 2, kernel_size=3, stride=1, padding=1),
+
+    def forward(self, input):
+        conv = self.cnn_layers(input)
+        out = self.final(self.softmax(conv))
+        return
