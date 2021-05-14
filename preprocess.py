@@ -71,11 +71,9 @@ def preprocess_and_save():
 
     labX_norm = normalize(labX)
 
-    labXy = np.array([np.array(labX_norm), np.array(laby)])
+    labXy = [labX_norm, laby]
 
-    print(labXy.shape)
-
-    # torch.save(labXy, './processed_data/trainset_lab_norm.pt')
+    torch.save(labXy, './processed_data/trainset_lab_norm.pt')
 
     # ab_pairs0 = []
     # count = 0
