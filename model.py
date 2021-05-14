@@ -1,28 +1,29 @@
 import torch
+import torch.nn as nn
 from torch.nn import BatchNorm2d, Linear, ReLU, CrossEntropyLoss, Sequential, Conv2d, MaxPool2d, Module, Softmax
 import torch.nn.functional as F
 
 
-class Model:
+class Colorizer(nn.Module):
     def __init__(self):
-
+        super().__init__()
         self.cnn_layers = Sequential(
             # CONV1
             Conv2d(1, 8, kernel_size=3, stride=1, padding=1),
             ReLU(inplace=True),
-            Conv2d(8, 8, kernel_size=3, stride=1, padding=1),
+            Conv2d(8, 8, kernel_size=3, stride=2, padding=1),
             ReLU(inplace=True),
             BatchNorm2d(8),
             # CONV2
             Conv2d(8, 16, kernel_size=3, stride=1, padding=1),
             ReLU(inplace=True),
-            Conv2d(16, 16, kernel_size=3, stride=1, padding=1),
+            Conv2d(16, 16, kernel_size=3, stride=2, padding=1),
             ReLU(inplace=True),
             BatchNorm2d(16),
             # CONV3
             Conv2d(16, 32, kernel_size=3, stride=1, padding=1),
             ReLU(inplace=True),
-            Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
+            Conv2d(32, 32, kernel_size=3, stride=2, padding=1),
             ReLU(inplace=True),
             BatchNorm2d(32),
             # CONV4
@@ -50,7 +51,7 @@ class Model:
             ReLU(inplace=True),
             BatchNorm2d(64),
             # CONV8
-            Conv2d(64, 32, kernel_size=3, stride=1, padding=1),
+            Conv2d(64, 32, kernel_size=4, stride=2, padding=1),
             ReLU(inplace=True),
             Conv2d(32, 32, kernel_size=3, stride=1, padding=1),
             ReLU(inplace=True),
