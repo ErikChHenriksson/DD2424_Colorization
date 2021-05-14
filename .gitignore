@@ -131,3 +131,6 @@ dmypy.json
 # Data
 /data
 /processed_data
+
+# Certificate fix mac
+certificate_fix.py

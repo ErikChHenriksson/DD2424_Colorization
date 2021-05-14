@@ -55,35 +55,29 @@ def get_index(num):
     (num + 110) / 10
 
 
-def preprocess():
-    # trainset, testset = download_data()
+def preprocess_and_save():
+    trainset, testset = download_data()
+    trainset_lab = []
+    for batch in trainset:
+        for image in batch[0]:
+            lab = color.rgb2lab(image.T)
+            trainset_lab.append(lab)
+    torch.save(trainset_lab, './processed_data/trainset_lab.pt')
+    # trainset_lab_norm = normalize(trainset_lab)
+    ab_pairs0 = []
+    count = 0
+    for img in trainset_lab[:5000]:
+        for x in img[:, :, 1:]:
+            for y in x:
+                ab_pairs0.append(y)
+        count += 1
+        print(count)
 
-    # trainset_lab = []
-    # for batch in trainset:
-    #     for image in batch[0]:
-    #         lab = color.rgb2lab(image.T)
-    #         trainset_lab.append(lab)
+    torch.save(ab_pairs0, './processed_data/ab_values5000.pt')
 
-    # torch.save(trainset_lab, './processed_data/trainset_lab.pt')
-
-    # trainset_lab = torch.load('./processed_data/trainset_lab.pt')
-    # # trainset_lab_norm = normalize(trainset_lab)
-
-    # ab_pairs0 = []
-
-    # count = 0
-    # for img in trainset_lab[:5000]:
-    #     for x in img[:, :, 1:]:
-    #         for y in x:
-    #             ab_pairs0.append(y)
-    #     count += 1
-    #     print(count)
-
-    # print(len(ab_pairs0))
-    # # print(ab_pairs[0])
-
-    # torch.save(ab_pairs0, './processed_data/ab_values5000.pt')
-
+    
+def other_func():
+    trainset_lab = torch.load('./processed_data/trainset_lab.pt')
     ab_values = torch.load('./processed_data/ab_values5000.pt')
 
     print(len(ab_values))
@@ -105,4 +99,4 @@ def preprocess():
 
 
 if __name__ == '__main__':
-    preprocess()
+    preprocess_and_save()
