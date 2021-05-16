@@ -1,121 +1,76 @@
-import torch
 from torchvision import transforms, datasets
-import matplotlib.pyplot as plt
-from skimage import io, color
+from torch.utils.data import Dataset, DataLoader
+from skimage import color
 import numpy as np
 
+DATA_DIR = "./data"
 
-def download_data():
+
+def get_orig_data():
     transform_train = transforms.Compose([
-        # transforms.RandomCrop(32, padding=4),
-        # transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        # transforms.Normalize((0.4914, 0.4822, 0.4465),
-        #                      (0.2023, 0.1994, 0.2010)),
+        transforms.ToTensor()
     ])
-
     transform_test = transforms.Compose([
-        transforms.ToTensor(),
-        # transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        transforms.ToTensor()
     ])
 
-    train = datasets.CIFAR10("./data", train=True, download=False,
-                             transform=transform_train)
+    training_data = datasets.CIFAR10(DATA_DIR, train=True, download=True,
+                                     transform=transform_train)
+    test_data = datasets.CIFAR10(DATA_DIR, train=False, download=True,
+                                 transform=transform_test)
 
-    test = datasets.CIFAR10("./data", train=False, download=False,
-                            transform=transform_test)
-
-    trainset = torch.utils.data.DataLoader(
-        train, batch_size=100, shuffle=True, num_workers=2)
-    testset = torch.utils.data.DataLoader(
-        test, batch_size=100, shuffle=True, num_workers=2)
-
-    return [trainset, testset]
+    return training_data, test_data
 
 
-def normalize(X):
-    max = np.max(X, axis=0)
-    min = np.min(X, axis=0)
-    norm_data = (X-min) / (max-min)
+def get_lab_data():
+    # training_rgbs = []
+    training_labs = []
+    # test_rgbs = []
+    test_labs = []
+    training_data, test_data = get_orig_data()
 
-    return norm_data
+    for img, _label in training_data:
+        # training_rgbs.append(img)
+        training_labs.append(color.rgb2lab(img.T).T)
 
+    for img, _label in test_data:
+        # test_rgbs.append(img)
+        test_labs.append(color.rgb2lab(img.T).T)
 
-def get_index(num):
-    (num + 110) / 10
-
-
-def getQ(pixels):
-    colors = np.zeros((22, 22))
-
-    for p in pixels:
-        # (a, b) = p
-        colors[get_index(p[0]), get_index(p[1])] = 1
-
-    return np.count_nonzero(colors)
+    return training_labs, test_labs
 
 
-def preprocess_and_save():
-    trainset, testset = download_data()
-    labX = []
-    laby = []
-    for batch in trainset:
-        for image in batch[0]:
-            lab = color.rgb2lab(image.T)
-            L = lab[:, :, 0]
-            ab = lab[:, :, 1:]
-            labX.append(L)
-            laby.append(ab)
-
-    # torch.save(trainset_lab, './processed_data/trainset_lab.pt')
-
-    labX_norm = normalize(labX)
-
-    labXy = [labX_norm, laby]
-
-    torch.save(labXy, './processed_data/trainset_lab_norm.pt')
-
-    # ab_pairs0 = []
-    # count = 0
-    # for img in trainset_lab[:5000]:
-    #     for x in img[:, :, 1:]:
-    #         for y in x:
-    #             ab_pairs0.append(y)
-    #     count += 1
-    #     print(count)
-
-    # torch.save(ab_pairs0, './processed_data/ab_values5000.pt')
+training_labs, test_labs = get_lab_data()
 
 
-def load_data():
-    # trainset_lab = torch.load('./processed_data/trainset_lab.pt')
-    ab_values = torch.load('./processed_data/ab_values5000.pt')
+class LabTrainingDataset(Dataset):
+    def __init__(self):
+        self._training_labs = training_labs
 
-    # print(np.array(ab_values)[:, 0])
+    def __len__(self):
+        return len(self._training_labs)
 
-    # q = getQ(ab_values)
-
-    # print(q)
-
-    # plt.scatter(np.array(ab_values)[:, 0], np.array(ab_values)[:, 1])
-    # plt.show()
-
-    # mean = np.mean(np.mean(trainset_lab, axis=0))
-    # std = np.std(np.std(trainset_lab, axis=0))
-
-    # mean = np.mean(trainset_lab, axis=1, keepdims=True)
-    # std_dev = np.std(trainset_lab, axis=1, keepdims=True)
-    # norm_trainset_lab = (trainset_lab - mean) / std_dev
-
-    # x = trainset_lab[1]
-
-    # plt.imshow(x[:, :, 0].T, cmap='gray')
-    # plt.show()
-
-# def resize_img(img, HW=(256,256), resample=3):
-# 	return np.asarray(Image.fromarray(img).resize((HW[1],HW[0]), resample=resample))
+    def __getitem__(self, index):
+        return self._training_labs[index]
 
 
-if __name__ == '__main__':
-    preprocess_and_save()
-    # load_data()
+class LabTestDataset(Dataset):
+    def __init__(self):
+        self._test_labs = test_labs
+
+    def __len__(self):
+        return len(self._test_labs)
+
+    def __getitem__(self, index):
+        return self._test_labs[index]
+
+
+training_dataset = LabTrainingDataset()
+test_dataset = LabTestDataset()
+
+lab_training_loader = DataLoader(training_dataset, batch_size=100,
+                                 shuffle=True, num_workers=2)
+lab_test_loader = DataLoader(test_dataset, batch_size=100,
+                             shuffle=True, num_workers=2)
+
+

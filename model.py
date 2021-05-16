@@ -1,97 +1,122 @@
-import torch
 import torch.nn as nn
-from torch.nn import BatchNorm2d, Linear, ReLU, CrossEntropyLoss, Sequential, Conv2d, MaxPool2d, Module, Softmax
-import torch.nn.functional as F
+from torch.nn import BatchNorm2d, ReLU, Sequential, Conv2d, Softmax, Upsample
 
 
 class Colorizer(nn.Module):
-    def __init__(self, norm_layer=nn.BatchNorm2d):
-        super(Colorizer, self).__init__()
+    def __init__(self):
+        super().__init__()
 
-        model1=[nn.Conv2d(1, 64, kernel_size=3, stride=1, padding=1, bias=True),]
-        model1+=[nn.ReLU(True),]
-        model1+=[nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1, bias=True),]
-        model1+=[nn.ReLU(True),]
-        model1+=[norm_layer(64),]
+        self._l_cent = 50.
+        self._l_norm = 100.
+        self._ab_norm = 110.
 
-        model2=[nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1, bias=True),]
-        model2+=[nn.ReLU(True),]
-        model2+=[nn.Conv2d(128, 128, kernel_size=3, stride=2, padding=1, bias=True),]
-        model2+=[nn.ReLU(True),]
-        model2+=[norm_layer(128),]
+        model1 = [
+            # CONV1
+            Conv2d(1, 8, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            Conv2d(8, 8, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            BatchNorm2d(8)]
+            # CONV2
+        model2 = [
+            Conv2d(8, 16, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            Conv2d(16, 16, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            BatchNorm2d(16)]
+            # CONV3
+        model3 = [
+            Conv2d(16, 32, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            Conv2d(32, 32, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            Conv2d(32, 32, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            BatchNorm2d(32)]
+            # CONV4
+        model4 = [
+            Conv2d(32, 64, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            Conv2d(64, 64, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            Conv2d(64, 64, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            BatchNorm2d(64)]
+            # CONV5
+        model5 = [
+            Conv2d(64, 64, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            Conv2d(64, 64, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            Conv2d(64, 64, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            BatchNorm2d(64)]
+            # CONV6
+        model6 = [
+            Conv2d(64, 64, kernel_size=3, padding=2),
+            ReLU(inplace=True),
+            Conv2d(64, 64, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            Conv2d(64, 64, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            BatchNorm2d(64)]
+            # CONV7
+        model7 = [
+            Conv2d(64, 64, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            Conv2d(64, 64, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            Conv2d(64, 64, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            BatchNorm2d(64)]
+            # CONV8
+        model8 = [
+            Conv2d(64, 32, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            Conv2d(32, 32, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            Conv2d(32, 32, kernel_size=3, padding=1),
+            ReLU(inplace=True),
+            # TO COLOR PROBABILITIES
+            Conv2d(32, 484, kernel_size=3, padding=0)]
 
-        model3=[nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1, bias=True),]
-        model3+=[nn.ReLU(True),]
-        model3+=[nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=True),]
-        model3+=[nn.ReLU(True),]
-        model3+=[nn.Conv2d(256, 256, kernel_size=3, stride=2, padding=1, bias=True),]
-        model3+=[nn.ReLU(True),]
-        model3+=[norm_layer(256),]
+        self._model1 = Sequential(*model1)
+        self._model2 = Sequential(*model2)
+        self._model3 = Sequential(*model3)
+        self._model4 = Sequential(*model4)
+        self._model5 = Sequential(*model5)
+        self._model6 = Sequential(*model6)
+        self._model7 = Sequential(*model7)
+        self._model8 = Sequential(*model8)
 
-        model4=[nn.Conv2d(256, 512, kernel_size=3, stride=1, padding=1, bias=True),]
-        model4+=[nn.ReLU(True),]
-        model4+=[nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1, bias=True),]
-        model4+=[nn.ReLU(True),]
-        model4+=[nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1, bias=True),]
-        model4+=[nn.ReLU(True),]
-        model4+=[norm_layer(512),]
+        self._softmax = Softmax(dim=1)
+        self._final = Conv2d(484, 2, kernel_size=1, stride=1, padding=0, dilation=1)
+        self._up = Upsample(scale_factor=1, mode='bilinear')
 
-        model5=[nn.Conv2d(512, 512, kernel_size=3, dilation=2, stride=1, padding=2, bias=True),]
-        model5+=[nn.ReLU(True),]
-        model5+=[nn.Conv2d(512, 512, kernel_size=3, dilation=2, stride=1, padding=2, bias=True),]
-        model5+=[nn.ReLU(True),]
-        model5+=[nn.Conv2d(512, 512, kernel_size=3, dilation=2, stride=1, padding=2, bias=True),]
-        model5+=[nn.ReLU(True),]
-        model5+=[norm_layer(512),]
+    def forward(self, input):
+        # print(input.shape)
+        conv1 = self._model1(self.norm_l(input))
+        conv2 = self._model2(conv1)
+        conv3 = self._model3(conv2)
+        conv4 = self._model4(conv3)
+        conv5 = self._model5(conv4)
+        conv6 = self._model6(conv5)
+        conv7 = self._model7(conv6)
+        conv8 = self._model8(conv7)
 
-        model6=[nn.Conv2d(512, 512, kernel_size=3, dilation=2, stride=1, padding=2, bias=True),]
-        model6+=[nn.ReLU(True),]
-        model6+=[nn.Conv2d(512, 512, kernel_size=3, dilation=2, stride=1, padding=2, bias=True),]
-        model6+=[nn.ReLU(True),]
-        model6+=[nn.Conv2d(512, 512, kernel_size=3, dilation=2, stride=1, padding=2, bias=True),]
-        model6+=[nn.ReLU(True),]
-        model6+=[norm_layer(512),]
+        out = self._final(self._softmax(conv8))
+        return self.unnorm_ab(self._up(out))
 
-        model7=[nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1, bias=True),]
-        model7+=[nn.ReLU(True),]
-        model7+=[nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1, bias=True),]
-        model7+=[nn.ReLU(True),]
-        model7+=[nn.Conv2d(512, 512, kernel_size=3, stride=1, padding=1, bias=True),]
-        model7+=[nn.ReLU(True),]
-        model7+=[norm_layer(512),]
+    def norm_l(self, l):
+        return (l - self._l_cent) / self._l_norm
 
-        model8=[nn.ConvTranspose2d(512, 256, kernel_size=4, stride=2, padding=1, bias=True),]
-        model8+=[nn.ReLU(True),]
-        model8+=[nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=True),]
-        model8+=[nn.ReLU(True),]
-        model8+=[nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1, bias=True),]
-        model8+=[nn.ReLU(True),]
+    def unnorm_l(self, l):
+        return l * self._l_norm + self._l_cent
 
-        model8+=[nn.Conv2d(256, 313, kernel_size=1, stride=1, padding=0, bias=True),]
+    def norm_ab(self, ab):
+        return ab / self._ab_norm
 
-        self.model1 = nn.Sequential(*model1)
-        self.model2 = nn.Sequential(*model2)
-        self.model3 = nn.Sequential(*model3)
-        self.model4 = nn.Sequential(*model4)
-        self.model5 = nn.Sequential(*model5)
-        self.model6 = nn.Sequential(*model6)
-        self.model7 = nn.Sequential(*model7)
-        self.model8 = nn.Sequential(*model8)
+    def unnorm_ab(self, ab):
+        return ab * self._ab_norm
 
-        self.softmax = nn.Softmax(dim=1)
-        self.model_out = nn.Conv2d(313, 2, kernel_size=1, padding=0, dilation=1, stride=1, bias=False)
-        self.upsample4 = nn.Upsample(scale_factor=4, mode='bilinear')
-
-    def forward(self, input_l):
-        conv1_2 = self.model1(self.normalize_l(input_l))
-        conv2_2 = self.model2(conv1_2)
-        conv3_3 = self.model3(conv2_2)
-        conv4_3 = self.model4(conv3_3)
-        conv5_3 = self.model5(conv4_3)
-        conv6_3 = self.model6(conv5_3)
-        conv7_3 = self.model7(conv6_3)
-        conv8_3 = self.model8(conv7_3)
-        out_reg = self.model_out(self.softmax(conv8_3))
-
-        return self.unnormalize_ab(self.upsample4(out_reg))
 

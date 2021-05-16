@@ -1,50 +1,56 @@
 from model import Colorizer
+from preprocess import lab_training_loader
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import torch
+from torch.autograd import Variable
 import numpy as np
+from torch import split
+import torch
+import tqdm
+
+if __name__ == '__main__':
+    Colorizer = Colorizer()
+
+    # No gpu..
+    # Colorizer.cuda()
+
+    optimizer = optim.Adam(Colorizer.parameters(), lr=0.001)
+    criterion = nn.MSELoss()
+
+    epochs = 3
+    # batch_size = 100
+
+    for epoch in tqdm(range(epochs)):
+        running_loss = 0.0
+        for i, data in enumerate(lab_training_loader):
+
+            # print(data.shape)
+            lab = split(data, [1, 2], dim=1)
+            l = lab[0]
+            ab = lab[1]
+
+            # print(l.shape)
+            # print(ab.shape)
+
+            l = Variable(l)
+            ab = Variable(ab)
+
+            train = Colorizer(l)
+
+            optimizer.zero_grad()
+            loss = criterion(train, ab)
+            loss.backward()
+            optimizer.step()
+
+            # if i == 10:
+            #     print('loss is: ' + str(loss))
+            #     break
+
+            running_loss += (loss % 100)
+        print(f'Running loss is: {running_loss}')
+
+        torch.save(Colorizer.state_dict(), 'models/cifar10_colorizer')
 
 
-def euclidian_loss(input, target):
-    return torch.sqrt((input - target)**2).sum()/2
 
-
-cnn = Colorizer()
-
-optimizer = optim.Adam(cnn.parameters(), lr=0.001)
-criterion = nn.CrossEntropyLoss()
-
-trainset, labels = torch.load('./processed_data/trainset_lab_norm.pt')
-batch_size = 100
-trainset = trainset[:5000]
-labels = labels[:5000]
-num_batches = int(len(trainset) / batch_size)
-
-epochs = 3
-
-for epoch in range(epochs):
-    running_loss = 0.0
-    for b in range(num_batches):  # enumerate(trainset, 0):
-        # get the inputs; data is a list of [inputs, labels]
-        b_start = b*batch_size
-        b_end = (b+1)*batch_size
-        inputs, labels = trainset[b_start:b_end], labels[b_start:b_end]
-
-        inputs = torch.from_numpy(inputs)
-        labels = torch.from_numpy(np.array(labels))
-
-        # zero the parameter gradients
-        optimizer.zero_grad()
-
-        # forward + backward + optimize
-        outputs = cnn(inputs)
-        loss = euclidian_loss(outputs, labels)
-        loss.backward()
-        optimizer.step()
-
-        # print statistics
-        running_loss += loss.item()
-
-    print(f'loss: {running_loss}')
-    running_loss = 0.0
