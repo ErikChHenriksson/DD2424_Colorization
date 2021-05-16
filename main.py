@@ -8,48 +8,48 @@ import numpy as np
 from torch import split
 import torch
 
+if __name__ == '__main__':
+    Colorizer = Colorizer()
 
-Colorizer = Colorizer()
+    # No gpu..
+    # Colorizer.cuda()
 
-# No gpu..
-# Colorizer.cuda()
+    optimizer = optim.Adam(Colorizer.parameters(), lr=0.001)
+    criterion = nn.MSELoss()
 
-optimizer = optim.Adam(Colorizer.parameters(), lr=0.001)
-criterion = nn.MSELoss()
+    epochs = 3
+    # batch_size = 100
 
-epochs = 3
-# batch_size = 100
+    for epoch in range(epochs):
+        running_loss = 0.0
+        for i, data in enumerate(lab_training_loader):
 
-for epoch in range(epochs):
-    running_loss = 0.0
-    for i, data in enumerate(lab_training_loader):
+            # print(data.shape)
+            lab = split(data, [1, 2], dim=1)
+            l = lab[0]
+            ab = lab[1]
 
-        # print(data.shape)
-        lab = split(data, [1, 2], dim=1)
-        l = lab[0]
-        ab = lab[1]
+            # print(l.shape)
+            # print(ab.shape)
 
-        # print(l.shape)
-        # print(ab.shape)
+            l = Variable(l)
+            ab = Variable(ab)
 
-        l = Variable(l)
-        ab = Variable(ab)
+            train = Colorizer(l)
 
-        train = Colorizer(l)
+            optimizer.zero_grad()
+            loss = criterion(train, ab)
+            loss.backward()
+            optimizer.step()
 
-        optimizer.zero_grad()
-        loss = criterion(train, ab)
-        loss.backward()
-        optimizer.step()
+            # if i == 10:
+            #     print('loss is: ' + str(loss))
+            #     break
 
-        # if i == 10:
-        #     print('loss is: ' + str(loss))
-        #     break
+            running_loss += (loss % 100)
+        print(f'Running loss is: {running_loss}')
 
-        running_loss += (loss % 100)
-    print(f'Running loss is: {running_loss}')
-
-    torch.save(Colorizer.state_dict(), 'models/cifar10_colorizer')
+        torch.save(Colorizer.state_dict(), 'models/cifar10_colorizer')
 
 
 
