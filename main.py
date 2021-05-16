@@ -7,6 +7,7 @@ from torch.autograd import Variable
 import numpy as np
 from torch import split
 import torch
+import tqdm
 
 if __name__ == '__main__':
     Colorizer = Colorizer()
@@ -20,7 +21,7 @@ if __name__ == '__main__':
     epochs = 3
     # batch_size = 100
 
-    for epoch in range(epochs):
+    for epoch in tqdm(range(epochs)):
         running_loss = 0.0
         for i, data in enumerate(lab_training_loader):
 
