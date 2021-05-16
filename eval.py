@@ -5,6 +5,7 @@ from torch import split
 from torch.autograd import Variable
 from skimage import color
 from PIL import Image
+import matplotlib.pyplot as plt
 
 
 if __name__ == '__main__':
@@ -40,5 +41,13 @@ if __name__ == '__main__':
         print(rgb.shape)
         im = Image.fromarray(rgb, mode='RGB')
         im.save('rgb.png', 'PNG')
+
+        # plot images
+        fig, (ax1, ax2) = plt.subplots(2, 1)
+        ax1.set_title('Original')
+        ax2.set_title('Network output')
+        ax1.imshow(color.lab2rgb(orig))
+        ax2.imshow(rgb)
+        plt.show()
 
         break

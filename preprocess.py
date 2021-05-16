@@ -2,6 +2,7 @@ from torchvision import transforms, datasets
 from torch.utils.data import Dataset, DataLoader
 from skimage import color
 import numpy as np
+from PIL import Image
 
 DATA_DIR = "./data"
 
@@ -76,3 +77,7 @@ def load_data():
                                  shuffle=True, num_workers=2)
 
     return lab_training_loader, lab_test_loader
+
+
+if __name__ == '__main__':
+    load_data()
