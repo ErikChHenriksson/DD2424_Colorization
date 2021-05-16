@@ -15,10 +15,10 @@ cnn = Colorizer()
 optimizer = optim.Adam(cnn.parameters(), lr=0.001)
 criterion = nn.CrossEntropyLoss()
 
-trainset = torch.load('./processed_data/trainset_lab_L_norm.pt')
-labels = torch.load('./processed_data/ab_values5000.pt')
+trainset, labels = torch.load('./processed_data/trainset_lab_norm.pt')
 batch_size = 100
 trainset = trainset[:5000]
+labels = labels[:5000]
 num_batches = int(len(trainset) / batch_size)
 
 epochs = 3
