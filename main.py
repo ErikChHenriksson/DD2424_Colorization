@@ -1,5 +1,5 @@
 from model import Colorizer
-from preprocess import lab_training_loader
+from preprocess import load_data
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
@@ -7,23 +7,31 @@ from torch.autograd import Variable
 import numpy as np
 from torch import split
 import torch
-import tqdm
+from tqdm import tqdm
 
-if __name__ == '__main__':
-    Colorizer = Colorizer()
+
+def train_network(train_X, train_y):
+
+    net = Colorizer()
 
     # No gpu..
-    # Colorizer.cuda()
+    net.cuda()
+    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # train_X = train_X.to(device)
 
-    optimizer = optim.Adam(Colorizer.parameters(), lr=0.001)
+    optimizer = optim.Adam(net.parameters(), lr=0.001)
     criterion = nn.MSELoss()
 
     epochs = 3
     # batch_size = 100
 
-    for epoch in tqdm(range(epochs)):
+    for epoch in range(epochs):
         running_loss = 0.0
-        for i, data in enumerate(lab_training_loader):
+        for i, data in enumerate(tqdm(train_X)):
+
+            device = torch.device(
+                "cuda:0" if torch.cuda.is_available() else "cpu")
+            data = data.to(device)
 
             # print(data.shape)
             lab = split(data, [1, 2], dim=1)
@@ -36,7 +44,7 @@ if __name__ == '__main__':
             l = Variable(l)
             ab = Variable(ab)
 
-            train = Colorizer(l)
+            train = net(l)
 
             optimizer.zero_grad()
             loss = criterion(train, ab)
@@ -50,7 +58,9 @@ if __name__ == '__main__':
             running_loss += (loss % 100)
         print(f'Running loss is: {running_loss}')
 
-        torch.save(Colorizer.state_dict(), 'models/cifar10_colorizer')
+        torch.save(net.state_dict(), 'models/cifar10_colorizer')
 
 
-
+if __name__ == '__main__':
+    train_X, train_y = load_data()
+    train_network(train_X, train_y)

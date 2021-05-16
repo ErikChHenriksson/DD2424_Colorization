@@ -14,20 +14,20 @@ def get_orig_data():
         transforms.ToTensor()
     ])
 
-    training_data = datasets.CIFAR10(DATA_DIR, train=True, download=True,
+    training_data = datasets.CIFAR10(DATA_DIR, train=True, download=False,
                                      transform=transform_train)
-    test_data = datasets.CIFAR10(DATA_DIR, train=False, download=True,
+    test_data = datasets.CIFAR10(DATA_DIR, train=False, download=False,
                                  transform=transform_test)
 
     return training_data, test_data
 
 
-def get_lab_data():
+def get_lab_data(train_rgb, test_rgb):
     # training_rgbs = []
     training_labs = []
     # test_rgbs = []
     test_labs = []
-    training_data, test_data = get_orig_data()
+    training_data, test_data = train_rgb, test_rgb
 
     for img, _label in training_data:
         # training_rgbs.append(img)
@@ -40,11 +40,8 @@ def get_lab_data():
     return training_labs, test_labs
 
 
-training_labs, test_labs = get_lab_data()
-
-
 class LabTrainingDataset(Dataset):
-    def __init__(self):
+    def __init__(self, training_labs):
         self._training_labs = training_labs
 
     def __len__(self):
@@ -55,7 +52,7 @@ class LabTrainingDataset(Dataset):
 
 
 class LabTestDataset(Dataset):
-    def __init__(self):
+    def __init__(self, test_labs):
         self._test_labs = test_labs
 
     def __len__(self):
@@ -65,12 +62,17 @@ class LabTestDataset(Dataset):
         return self._test_labs[index]
 
 
-training_dataset = LabTrainingDataset()
-test_dataset = LabTestDataset()
+def load_data():
+    train_rgb, test_rgb = get_orig_data()
 
-lab_training_loader = DataLoader(training_dataset, batch_size=100,
+    training_labs, test_labs = get_lab_data(train_rgb, test_rgb)
+
+    training_dataset = LabTrainingDataset(training_labs)
+    test_dataset = LabTestDataset(test_labs)
+
+    lab_training_loader = DataLoader(training_dataset, batch_size=100,
+                                     shuffle=True, num_workers=2)
+    lab_test_loader = DataLoader(test_dataset, batch_size=100,
                                  shuffle=True, num_workers=2)
-lab_test_loader = DataLoader(test_dataset, batch_size=100,
-                             shuffle=True, num_workers=2)
 
-
+    return lab_training_loader, lab_test_loader
