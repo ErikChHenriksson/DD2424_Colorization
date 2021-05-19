@@ -17,14 +17,14 @@ class Colorizer(nn.Module):
             Conv2d(64, 64, kernel_size=3, padding=1),
             ReLU(inplace=True),
             BatchNorm2d(64)]
-            # CONV2
+        # CONV2
         model2 = [
             Conv2d(64, 128, kernel_size=3, padding=1),
             ReLU(inplace=True),
             Conv2d(128, 128, kernel_size=3, padding=1),
             ReLU(inplace=True),
             BatchNorm2d(128)]
-            # CONV3
+        # CONV3
         model3 = [
             Conv2d(128, 256, kernel_size=3, padding=1),
             ReLU(inplace=True),
@@ -33,7 +33,7 @@ class Colorizer(nn.Module):
             Conv2d(256, 256, kernel_size=3, padding=1),
             ReLU(inplace=True),
             BatchNorm2d(256)]
-            # CONV4
+        # CONV4
         model4 = [
             Conv2d(256, 512, kernel_size=3, padding=1),
             ReLU(inplace=True),
@@ -42,7 +42,7 @@ class Colorizer(nn.Module):
             Conv2d(512, 512, kernel_size=3, padding=1),
             ReLU(inplace=True),
             BatchNorm2d(512)]
-            # CONV5
+        # CONV5
         model5 = [
             Conv2d(512, 512, kernel_size=3, padding=1),
             ReLU(inplace=True),
@@ -51,7 +51,7 @@ class Colorizer(nn.Module):
             Conv2d(512, 512, kernel_size=3, padding=1),
             ReLU(inplace=True),
             BatchNorm2d(512)]
-            # CONV6
+        # CONV6
         model6 = [
             Conv2d(512, 512, kernel_size=3, padding=2),
             ReLU(inplace=True),
@@ -60,7 +60,7 @@ class Colorizer(nn.Module):
             Conv2d(512, 512, kernel_size=3, padding=1),
             ReLU(inplace=True),
             BatchNorm2d(512)]
-            # CONV7
+        # CONV7
         model7 = [
             Conv2d(512, 512, kernel_size=3, padding=1),
             ReLU(inplace=True),
@@ -69,7 +69,7 @@ class Colorizer(nn.Module):
             Conv2d(512, 512, kernel_size=3, padding=1),
             ReLU(inplace=True),
             BatchNorm2d(512)]
-            # CONV8
+        # CONV8
         model8 = [
             Conv2d(512, 256, kernel_size=3, padding=1),
             ReLU(inplace=True),
@@ -78,7 +78,7 @@ class Colorizer(nn.Module):
             Conv2d(256, 256, kernel_size=3, padding=1),
             ReLU(inplace=True),
             # TO COLOR PROBABILITIES
-            Conv2d(256, 484, kernel_size=3, padding=0)]
+            Conv2d(256, 313, kernel_size=3, padding=0)]
 
         self._model1 = Sequential(*model1)
         self._model2 = Sequential(*model2)
@@ -90,7 +90,8 @@ class Colorizer(nn.Module):
         self._model8 = Sequential(*model8)
 
         self._softmax = Softmax(dim=1)
-        self._final = Conv2d(484, 2, kernel_size=1, stride=1, padding=0, dilation=1)
+        self._final = Conv2d(313, 2, kernel_size=1,
+                             stride=1, padding=0, dilation=1)
         self._up = Upsample(scale_factor=1, mode='bilinear')
 
     def forward(self, input):
@@ -118,5 +119,3 @@ class Colorizer(nn.Module):
 
     def unnorm_ab(self, ab):
         return ab * self._ab_norm
-
-

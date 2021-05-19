@@ -1,24 +1,39 @@
 import torch
-from model import Colorizer
-from preprocess import load_data
+from model_cifar import Colorizer
+from preprocess import *
 from torch import split
 from torch.autograd import Variable
 from skimage import color
 from PIL import Image
 import matplotlib.pyplot as plt
+from functions import *
 
 
-if __name__ == '__main__':
-    # get trained model
-    model = Colorizer()
-    # You can remove the map_location argument if you want to use GPU
-    model.load_state_dict(
-        (torch.load('models/cifar10_colorizerCEL', map_location=torch.device('cpu'))))
-    model.eval()
+def load_data(data='cifar'):
+    train_rgb, test_rgb = get_orig_data(data)
 
-    train_X, train_y = load_data()
+    training_labs, test_labs = get_lab_data(train_rgb, test_rgb)
+
+    training_dataset = LabTrainingDataset(training_labs)
+    test_dataset = LabTestDataset(test_labs)
+
+    lab_training_loader = DataLoader(training_dataset, batch_size=100,
+                                     shuffle=True, num_workers=2)
+    lab_test_loader = DataLoader(test_dataset, batch_size=100,
+                                 shuffle=True, num_workers=2)
+
+    torch.save(lab_training_loader, 'dataloaders_eval/' +
+               data+'_lab_training_loader.pth')
+    torch.save(lab_training_loader, 'dataloaders_eval/' +
+               data+'_lab_test_loader.pth')
+
+    return lab_training_loader, lab_test_loader
+
+
+def save_output_imgs(model, test_data):
+
     case, num_cases = 1, 10
-    for i, data in enumerate(train_X):
+    for i, data in enumerate(test_data):
         # get the first picture in batch
         orig = data[0, :, :, :].data.cpu().numpy().T
 
@@ -34,13 +49,15 @@ if __name__ == '__main__':
         l = Variable(l)
 
         # predict ab
-        ab = model(l)
+        abq = model(l)
+        ab = quantization_to_ab(abq)
+
         print('colormax', torch.max(ab))
         out = torch.cat((l, ab), dim=1)
 
         # transform to rgb and save the img
         rgb = color.lab2rgb(out.data.cpu().numpy()[0, ...].T)
-        #print(rgb.shape)
+        # print(rgb.shape)
         im = Image.fromarray(rgb, mode='RGB')
         im.save('rgb.png', 'PNG')
 
@@ -55,3 +72,17 @@ if __name__ == '__main__':
         print('case=', case, 'num_cases=', num_cases)
         if case > num_cases:
             break
+
+
+if __name__ == '__main__':
+    # get trained model
+    model = Colorizer()
+    # You can remove the map_location argument if you want to use GPU
+    model.load_state_dict(
+        (torch.load('models/cifar10_colorizerCEL', map_location=torch.device('cpu'))))
+    model.eval()
+
+    # train_data = torch.load('./dataloaders_eval/cifar_lab_training_loader.pth')
+    test_data = torch.load('./dataloaders_eval/cifar_lab_test_loader.pth')
+
+    save_output_imgs(model, test_data)
