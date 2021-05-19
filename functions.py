@@ -2,8 +2,10 @@ import numpy as np
 import torch
 import math
 import matplotlib.pyplot as plt
-from scipy import spatial
+from scipy.spatial import KDTree
 
+q = 208 # This was the Q we got, right?
+q_space = np.load('./quantized_space/q_space.npy')
 
 def getQ(pixels):
     colors = np.zeros((22, 22))
@@ -55,24 +57,45 @@ def one_hot_quantization(ab, q_list):
 
 
 def space_to_points():
-    space = np.load('./quantized_space/q_space.npy')
-    points = np.zeros((space.shape[0], space.shape[1], 2))
-    for i in range(space.shape[0]):
-        for j in range(space.shape[1]):
-            points[i, j] = [space[i, j]*i*10, space[i, j]*j*10]
-    return points.flatten()
+    # Saves/returns the gamut as a list of points
+    points = []
+    for i in range(q_space.shape[0]):
+        for j in range(q_space.shape[1]):
+            if q_space[i,j] == 0:
+                continue
+            points.append([q_space[i, j]*i*10+5, q_space[i, j]*j*10+5])
+    np.save('./quantized_space/q_points.npy', points)
+    return points
 
 
-def create_KDTree():
-    points = space_to_points()
-    ab = [-55.45, 35.10]
-    print(points[spatial.KDTree(points).query(ab)[1]])
+def find_k_nearest_q(ab, k=1):
+    """ 
+    INPUT:  The point ab. Wants point format [a,b] for ab.
+            Optionally k, the number of points requested. Default 1.
+    OUTPUT: The k closest point(s)
+            and the distance(s) to them
+    """
+    points = np.load('./quantized_space/q_points.npy')
+    tree = KDTree(points)
+    dist = tree.query(ab, k=k)[0]
+    index = tree.query(ab, k=k)[1]
+    closest_point = points[index]
+    return closest_point, dist
 
 
-def gaussian(v1, v2, sigma, sym=True):
+def one_hot_nearest_q(ab):
+    nearest_q, _ = find_k_nearest_q(ab)
+    print(nearest_q)
+    return one_hot_quantization(nearest_q)
+
+
+def gaussian(v1, v2, sigma):
     sig2 = 2 * sigma * sigma
     w = np.exp((v1-v2) ** 2 / sig2)
     return w
+
+def i_to_q():
+    return 
 
 
 def nearest_quantized(ab):
@@ -87,7 +110,7 @@ def define_in_gamut(ab_vals):
         if not space[a, b]:
             space[a, b] = 1
             q += 1
-
+    np.save('./quantized_space/q_space.npy', space)
     return space, q
 
 
@@ -103,15 +126,7 @@ def create_q_list():
 
 
 if __name__ == '__main__':
-    # create_KDTree()
-    # create_q_list()
-
-    print((1, 2) == [1, 2])
-
-    # ab_vals = torch.load('./processed_data/ab_values5000.pt')
-    # space, q = define_in_gamut(ab_vals)
-
-    # np.save('./quantized_space/q_space.npy', space)
+    print(one_hot_nearest_q([50, 55]))
 
     # plt.save('/graphs/gamut2.png')
     # plt.imshow(space)

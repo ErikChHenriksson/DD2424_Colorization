@@ -6,7 +6,7 @@ from PIL import Image
 from torch import split
 from functions import ab_to_quantization
 
-DATA_DIR = "./data"
+data_dir = "./data"
 
 
 def get_orig_data(data):
@@ -18,9 +18,9 @@ def get_orig_data(data):
     ])
 
     if data == 'cifar':
-        training_data = datasets.CIFAR10(DATA_DIR, train=True, download=False,
+        training_data = datasets.CIFAR10(data_dir, train=True, download=False,
                                          transform=transform_train)
-        test_data = datasets.CIFAR10(DATA_DIR, train=False, download=False,
+        test_data = datasets.CIFAR10(data_dir, train=False, download=False,
                                      transform=transform_test)
     elif data == 'imgnet':
         training_data = datasets.ImageNet(
