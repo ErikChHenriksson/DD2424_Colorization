@@ -132,5 +132,12 @@ dmypy.json
 /data
 /processed_data
 
+# imgs
+/imgs
+
+# Dataloaders
+/dataloaders
+
 # Certificate fix mac
 certificate_fix.py
+

@@ -13,7 +13,7 @@ if __name__ == '__main__':
     model = Colorizer()
     # You can remove the map_location argument if you want to use GPU
     model.load_state_dict(
-        (torch.load('models/cifar10_colorizer', map_location=torch.device('cpu'))))
+        (torch.load('models/cifar10_colorizerCEL', map_location=torch.device('cpu'))))
     model.eval()
 
     train_X, train_y = load_data()

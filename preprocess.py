@@ -3,11 +3,12 @@ from torch.utils.data import Dataset, DataLoader
 from skimage import color
 import numpy as np
 from PIL import Image
+import torch
 
 DATA_DIR = "./data"
 
 
-def get_orig_data():
+def get_orig_data(data):
     transform_train = transforms.Compose([
         transforms.ToTensor()
     ])
@@ -15,10 +16,16 @@ def get_orig_data():
         transforms.ToTensor()
     ])
 
-    training_data = datasets.CIFAR10(DATA_DIR, train=True, download=False,
-                                     transform=transform_train)
-    test_data = datasets.CIFAR10(DATA_DIR, train=False, download=False,
-                                 transform=transform_test)
+    if data == 'cifar':
+        training_data = datasets.CIFAR10(DATA_DIR, train=True, download=False,
+                                         transform=transform_train)
+        test_data = datasets.CIFAR10(DATA_DIR, train=False, download=False,
+                                     transform=transform_test)
+    elif data == 'imgnet':
+        training_data = datasets.ImageNet(DATA_DIR, train=True, download=False,
+                                          transform=transform_train)
+        test_data = datasets.ImageNet(DATA_DIR, train=False, download=False,
+                                      transform=transform_test)
 
     return training_data, test_data
 
@@ -63,8 +70,8 @@ class LabTestDataset(Dataset):
         return self._test_labs[index]
 
 
-def load_data():
-    train_rgb, test_rgb = get_orig_data()
+def load_data(data='cifar'):
+    train_rgb, test_rgb = get_orig_data(data)
 
     training_labs, test_labs = get_lab_data(train_rgb, test_rgb)
 
@@ -76,8 +83,13 @@ def load_data():
     lab_test_loader = DataLoader(test_dataset, batch_size=100,
                                  shuffle=True, num_workers=2)
 
+    torch.save(lab_training_loader, 'dataloaders/' +
+               data+'_lab_training_loader.pth')
+    torch.save(lab_training_loader, 'dataloaders/'+data+'_lab_test_loader.pth')
+
     return lab_training_loader, lab_test_loader
 
 
 if __name__ == '__main__':
-    load_data()
+    """ Running this main function will save the dataloaders to dataloader/{dataloader_name} """
+    load_data('imgnet')
