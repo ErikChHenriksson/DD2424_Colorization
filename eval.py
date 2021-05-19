@@ -11,12 +11,14 @@ import matplotlib.pyplot as plt
 if __name__ == '__main__':
     # get trained model
     model = Colorizer()
-    model.load_state_dict((torch.load('models/cifar10_colorizer')))
+    # You can remove the map_location argument if you want to use GPU
+    model.load_state_dict(
+        (torch.load('models/cifar10_colorizer', map_location=torch.device('cpu'))))
     model.eval()
 
     train_X, train_y = load_data()
+    case, num_cases = 1, 10
     for i, data in enumerate(train_X):
-
         # get the first picture in batch
         orig = data[0, :, :, :].data.cpu().numpy().T
 
@@ -29,16 +31,16 @@ if __name__ == '__main__':
         l = lab[0]
         l = split(l, [1, 99], dim=0)
         l = l[0]  # get the first image
-        print(l.shape)
         l = Variable(l)
 
         # predict ab
         ab = model(l)
+        print('colormax', torch.max(ab))
         out = torch.cat((l, ab), dim=1)
 
         # transform to rgb and save the img
         rgb = color.lab2rgb(out.data.cpu().numpy()[0, ...].T)
-        print(rgb.shape)
+        #print(rgb.shape)
         im = Image.fromarray(rgb, mode='RGB')
         im.save('rgb.png', 'PNG')
 
@@ -48,6 +50,8 @@ if __name__ == '__main__':
         ax2.set_title('Network output')
         ax1.imshow(color.lab2rgb(orig))
         ax2.imshow(rgb)
-        plt.show()
-
-        break
+        fig.savefig('imgs/test'+str(case)+'.png')
+        case = case + 1
+        print('case=', case, 'num_cases=', num_cases)
+        if case > num_cases:
+            break
