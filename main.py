@@ -85,8 +85,12 @@ def multi_class_cross_entropy_loss_torch(predictions, labels):
     print(predictions[0])
     print(predictions[0].shape)
 
-    loss = -torch.sum(torch.sum(torch.sum(labels *
-                                          torch.log(predictions), dim=1), dim=1), dim=1)
+    # loss = -torch.sum(torch.sum(torch.sum(labels *
+    #                                       torch.log(predictions), dim=1), dim=1), dim=1)
+
+    q_sum = torch.sum()
+    loss = 0
+
     return loss
 
 
