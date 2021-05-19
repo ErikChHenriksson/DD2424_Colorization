@@ -8,7 +8,7 @@ import numpy as np
 from torch import split
 import torch
 from tqdm import tqdm
-from functions import one_hot_quantization
+from functions import find_k_nearest_q, one_hot_quantization
 
 
 def train_network(training_data):
@@ -84,6 +84,8 @@ def multi_class_cross_entropy_loss_torch(predictions, labels):
 
     print(predictions[0])
     print(predictions[0].shape)
+    five_nearest_points, distances = find_k_nearest_q(predictions[h,w,q])
+
 
     loss = -torch.sum(torch.sum(torch.sum(labels *
                                           torch.log(predictions), dim=1), dim=1), dim=1)
