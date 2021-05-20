@@ -31,6 +31,7 @@ def load_data(data='cifar'):
 
 
 def save_output_imgs(model, test_data):
+    q_points = np.load('./quantized_space/q_points.npy')
 
     case, num_cases = 1, 10
     for i, data in enumerate(test_data):
@@ -49,11 +50,13 @@ def save_output_imgs(model, test_data):
         l = Variable(l)
 
         # predict ab
-        abq = model(l)
-        ab = quantization_to_ab(abq)
+        q_dist = model(l)
 
-        print('colormax', torch.max(ab))
-        out = torch.cat((l, ab), dim=1)
+        ab = q_distribution_to_ab(q_dist[0], q_points)
+        ab_t = torch.Tensor(ab).T.view(1, 2, 32, 32)
+
+        print('colormax', torch.max(ab_t))
+        out = torch.cat((l, ab_t), dim=1)
 
         # transform to rgb and save the img
         rgb = color.lab2rgb(out.data.cpu().numpy()[0, ...].T)

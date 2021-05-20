@@ -8,10 +8,12 @@ import numpy as np
 from torch import split
 import torch
 from tqdm import tqdm
-from functions import find_k_nearest_q, one_hot_quantization
+from functions import find_k_nearest_q, one_hot_q, one_hot_quantization
 
 
 def train_network(training_data):
+
+    q_list = np.load('./quantized_space/q_list.npy')
 
     net = Colorizer()
 
@@ -42,9 +44,9 @@ def train_network(training_data):
             # print(l.shape)
             # print(ab.shape)
 
-            ab_onehot_list = [one_hot_quantization(v) for v in ab]
+            ab_onehot_list = [one_hot_q(v, q_list).T for v in ab]
 
-            ab_onehot = torch.Tensor(ab_onehot_list)
+            ab_onehot = torch.Tensor(ab_onehot_list).to(device)
 
             l = Variable(l)
             ab_onehot = Variable(ab_onehot)
@@ -57,9 +59,9 @@ def train_network(training_data):
             loss.backward()
             optimizer.step()
 
-            # if i == 10:
-            #     print('loss is: ' + str(loss))
-            #     break
+            if i == 5:
+                # print('loss is: ' + str(loss))
+                break
 
             running_loss += (loss % 100)
         print(f'Running loss is: {running_loss}')
@@ -82,16 +84,17 @@ def multi_class_cross_entropy_loss_torch(predictions, labels):
     :return: Computed multi-class cross entropy loss.
     """
 
-    print(predictions[0])
-    print(predictions[0].shape)
-    five_nearest_points, distances = find_k_nearest_q(predictions[h,w,q])
+    # print(predictions[0])
+    # print(predictions[0].shape)
+    # print(labels[0])
+    # print(labels[0].shape)
+    # five_nearest_points, distances = find_k_nearest_q(predictions[h,w,q])
 
+    loss = -torch.mean(torch.sum(torch.sum(torch.sum(labels *
+                                                     torch.log(predictions), dim=3), dim=1), dim=1))
 
-    # loss = -torch.sum(torch.sum(torch.sum(labels *
-    #                                       torch.log(predictions), dim=1), dim=1), dim=1)
-
-    q_sum = torch.sum()
-    loss = 0
+    # loss = nn.CrossEntropyLoss(predictions, labels)
+    # print(loss)
 
     return loss
 
@@ -99,7 +102,8 @@ def multi_class_cross_entropy_loss_torch(predictions, labels):
 def load_data(data='cifar'):
     train_rgb, test_rgb = get_orig_data(data)
 
-    training_labs, test_labs = get_lab_data(train_rgb, test_rgb)
+    training_labs = get_lab_data_train(train_rgb)
+    # test_labs = get_lab_data_test(test_rgb)
 
     training_dataset = LabTrainingDataset(training_labs)
     # test_dataset = LabTestDataset(test_labs)
@@ -118,10 +122,11 @@ def load_data(data='cifar'):
 
 if __name__ == '__main__':
     # load_data()
-    train_data = torch.load('./dataloaders/cifar_lab_training_loader.pth')
-    # test_data = torch.load('./dataloaders/cifar_lab_test_loader.pth')
 
-    # train_data = torch.load('./dataloaders/cifar_onehot_training.pth')
-    # test_data = torch.load('./dataloaders/cifar_lab_test_loader.pth')
+    train_data = torch.load('./dataloaders/cifar_lab_training_loader.pth')
+    # # test_data = torch.load('./dataloaders/cifar_lab_test_loader.pth')
+
+    # # train_data = torch.load('./dataloaders/cifar_onehot_training.pth')
+    # # test_data = torch.load('./dataloaders/cifar_lab_test_loader.pth')
 
     train_network(train_data)

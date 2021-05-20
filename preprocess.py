@@ -4,7 +4,8 @@ from skimage import color
 import numpy as np
 from PIL import Image
 from torch import split
-from functions import ab_to_quantization
+from functions import *
+from tqdm import tqdm
 
 data_dir = "./data"
 
@@ -31,24 +32,34 @@ def get_orig_data(data):
     return training_data, test_data
 
 
-def get_lab_data(train_rgb, test_rgb):
-    # training_rgbs = []
+def get_lab_data_train(train_rgb):
     training_labs = []
-    # test_rgbs = []
-    test_labs = []
-    training_data, test_data = train_rgb, test_rgb
+    q_list = np.load('./quantized_space/q_list.npy')
 
-    for img, _label in training_data:
+    for img, _label in tqdm(train_rgb):
         # training_rgbs.append(img)
-        lab = color.rgb2lab(img.T).T
-        training_labs.append(lab)
+        lab = color.rgb2lab(img.T)
+        l = lab[:, :, 0]
+        ab = lab[:, :, 1:]
+        one_hot = one_hot_q(ab, q_list)
+        training_labs.append([l, one_hot])
 
-    for img, _label in test_data:
+    return training_labs
+
+
+def get_lab_data_test(test_rgb):
+    test_labs = []
+    q_list = np.load('./quantized_space/q_list.npy')
+
+    for img, _label in test_rgb:
         # test_rgbs.append(img)
-        lab = color.rgb2lab(img.T).T
-        test_labs.append(lab)
+        lab = color.rgb2lab(img.T)
+        l = lab[:, :, 0]
+        ab = lab[:, :, 1:]
+        one_hot = one_hot_q(ab, q_list)
+        test_labs.append([l, one_hot])
 
-    return training_labs, test_labs
+    return test_labs
 
 
 class LabTrainingDataset(Dataset):
