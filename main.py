@@ -18,7 +18,12 @@ def train_network(training_data):
     net = Colorizer()
 
     # No gpu..
-    #net.cuda()
+    if torch.cuda.is_available():
+        net.cuda()
+
+    device = torch.device(
+        "cuda:0" if torch.cuda.is_available() else "cpu")
+
     # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # train_X = train_X.to(device)
 
@@ -32,8 +37,6 @@ def train_network(training_data):
         running_loss = 0.0
         for i, data in enumerate(tqdm(training_data)):
 
-            device = torch.device(
-                "cuda:0" if torch.cuda.is_available() else "cpu")
             data = data.to(device)
 
             # print(data.shape)
@@ -44,7 +47,7 @@ def train_network(training_data):
             # print(l.shape)
             # print(ab.shape)
 
-            ab_onehot_list = [one_hot_q(v, q_list).T for v in ab]
+            ab_onehot_list = [one_hot_q(v).T for v in ab]
 
             ab_onehot = torch.Tensor(ab_onehot_list).to(device)
 
@@ -91,10 +94,10 @@ def multi_class_cross_entropy_loss_torch(predictions, labels):
     # five_nearest_points, distances = find_k_nearest_q(predictions[h,w,q])
 
     loss = -torch.mean(torch.sum(torch.sum(torch.sum(labels *
-                                                     torch.log(predictions), dim=3), dim=1), dim=1))
+                                                     torch.log(predictions), dim=1), dim=1), dim=1))
 
     # loss = nn.CrossEntropyLoss(predictions, labels)
-    # print(loss)
+    print(loss)
 
     return loss
 
@@ -121,12 +124,12 @@ def load_data(data='cifar'):
 
 
 if __name__ == '__main__':
-    # load_data()
+    load_data()
 
-    train_data = torch.load('./dataloaders/cifar_lab_training_loader.pth')
+    # train_data = torch.load('./dataloaders/cifar_lab_training_loader.pth')
     # # test_data = torch.load('./dataloaders/cifar_lab_test_loader.pth')
 
     # # train_data = torch.load('./dataloaders/cifar_onehot_training.pth')
     # # test_data = torch.load('./dataloaders/cifar_lab_test_loader.pth')
 
-    train_network(train_data)
+    # train_network(train_data)
