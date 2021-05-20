@@ -18,7 +18,7 @@ def train_network(training_data):
     net = Colorizer()
 
     # No gpu..
-    net.cuda()
+    #net.cuda()
     # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # train_X = train_X.to(device)
 

@@ -6,6 +6,7 @@ from scipy.spatial import KDTree
 
 q = 208  # This was the Q we got, right?
 q_space = np.load('./quantized_space/q_space.npy')
+q_list = np.load('./quantized_space/q_space.npy')
 
 
 def getQ(pixels):
@@ -66,20 +67,21 @@ def one_hot_quantization(ab):
     return ab_one_hot
 
 
-def one_hot_q(ab_img, q_list):
+def one_hot_q(ab_img):
+    # Need to turn matrix with a values and matrix with b values into list of values(a,b)
     ab_img = ab_img.T
     h, w, _ = ab_img.shape
+    zipped = zip(ab_img[0], ab_img[1])
     q = q_list.shape[0]
 
     ab_one_hot = np.zeros((h, w, q))
-
     for i in range(h):
         for j in range(w):
-            # a, b = ab_img[i, j]
-            closest_p, idx, dist = find_k_nearest_q(ab_img[i, j].cpu())
-            # x = np.where(q_list[:, 0] == a)
-            # y = np.where(q_list[:, 1] == b)
-            # idx = np.intersect1d(x, y)
+            a, b = ab_img[i, j]
+            # closest_p, idx, dist = find_k_nearest_q(ab_img[i, j])#.cpu())
+            x = np.where(q_list[:, 0] == a)
+            y = np.where(q_list[:, 1] == b)
+            idx = np.intersect1d(x, y)
             ab_one_hot[i, j, idx] = 1
 
     return ab_one_hot
@@ -102,8 +104,10 @@ def find_k_nearest_q(ab, k=1):
     INPUT:  The point ab. Wants point format [a,b] for ab.
             Optionally k, the number of points requested. Default 1.
     OUTPUT: The k closest point(s)
+            their indexes in the list of q
             and the distance(s) to them
     """
+    print(ab)
     points = np.load('./quantized_space/q_points.npy')
     # plt.plot(np.array(points)[:, 0], np.array(points)[:, 1])
     # plt.show()
@@ -157,10 +161,10 @@ def create_q_list():
     np.save('./quantized_space/q_list.npy', np.array(q_list))
 
 
-if __name__ == '__main__':
-    nearest = one_hot_nearest_q([60, 130])
-    print(nearest)
 
+if __name__ == '__main__':
+
+    arr = [[1,2,3],[4,5,6]]
     # q_list = np.load('./quantized_space/q_list.npy')
     # print(q_list[15])
     # x = np.where(q_list[:, 0] == 6)
@@ -168,10 +172,10 @@ if __name__ == '__main__':
     # print(np.intersect1d(x, y))
     # print(x, y)
 
-    a = torch.randn(100, 32, 32, 208)
+    """ a = torch.randn(100, 32, 32, 208)
     sum = torch.sum(torch.sum(torch.sum(a, dim=3), dim=1), dim=1)
     print(sum)
-    print(sum.shape)
+    print(sum.shape) """
 
     # plt.save('/graphs/gamut2.png')
     # plt.imshow(space)

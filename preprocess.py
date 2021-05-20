@@ -1,5 +1,5 @@
 from torchvision import transforms, datasets
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, Subset, RandomSampler
 from skimage import color
 import numpy as np
 from PIL import Image
@@ -34,14 +34,13 @@ def get_orig_data(data):
 
 def get_lab_data_train(train_rgb):
     training_labs = []
-    q_list = np.load('./quantized_space/q_list.npy')
 
     for img, _label in tqdm(train_rgb):
         # training_rgbs.append(img)
         lab = color.rgb2lab(img.T)
         l = lab[:, :, 0]
         ab = lab[:, :, 1:]
-        one_hot = one_hot_q(ab, q_list)
+        one_hot = one_hot_q(ab)
         training_labs.append([l, one_hot])
 
     return training_labs
@@ -49,14 +48,13 @@ def get_lab_data_train(train_rgb):
 
 def get_lab_data_test(test_rgb):
     test_labs = []
-    q_list = np.load('./quantized_space/q_list.npy')
 
     for img, _label in test_rgb:
         # test_rgbs.append(img)
         lab = color.rgb2lab(img.T)
         l = lab[:, :, 0]
         ab = lab[:, :, 1:]
-        one_hot = one_hot_q(ab, q_list)
+        one_hot = one_hot_q(ab)
         test_labs.append([l, one_hot])
 
     return test_labs
@@ -82,3 +80,29 @@ class LabTestDataset(Dataset):
 
     def __getitem__(self, index):
         return self._test_labs[index]
+
+
+if __name__ == '__main__':
+    """ This main is used to create and save data from a downloaded dataset """
+    data = 'cifar'
+    train_rgb, test_rgb = get_orig_data(data)
+    training_labs = get_lab_data_train(train_rgb)
+    test_labs = get_lab_data_test(test_rgb)
+    training_dataset = LabTrainingDataset(training_labs)
+    test_dataset = LabTestDataset(test_labs)
+
+    num_train_samples = 100     # Create mini subset of data set
+    train_subset = Subset(training_dataset, np.arange(num_train_samples))
+    test_subset = Subset(test_dataset, np.arange(num_train_samples))
+    train_sampler = RandomSampler(train_subset)
+    test_sampler = RandomSampler(test_subset)
+    lab_training_loader = DataLoader(train_subset, sampler=train_sampler, batch_size=10,shuffle=True, num_workers=2)
+    lab_test_loader = DataLoader(test_sampler, sampler=train_sampler, batch_size=10,shuffle=True, num_workers=2)
+    """ lab_training_loader = DataLoader(training_dataset, batch_size=100,
+                                     shuffle=True, num_workers=2)
+    lab_test_loader = DataLoader(test_dataset, batch_size=100,
+                                 shuffle=True, num_workers=2) """
+
+    torch.save(lab_training_loader, 'dataloaders/' +
+               data+'_lab_training_loader_mini.pth')
+    torch.save(lab_test_loader, 'dataloaders/'+data+'_lab_test_loader_mini.pth')
