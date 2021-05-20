@@ -4,7 +4,7 @@ import math
 import matplotlib.pyplot as plt
 from scipy.spatial import KDTree
 
-q = 208  # This was the Q we got, right?
+q = 246  # This was the Q we got, right?
 q_space = np.load('./quantized_space/q_space.npy')
 
 
@@ -42,7 +42,11 @@ def q_distribution_to_ab(q_dist_img, q_points):
     for i in range(h):
         for j in range(w):
             q_idx = torch.argmax(q_dist_img[i, j])
+            print(q_dist_img[i, j])
+            print(torch.max(q_dist_img[i, j]))
+            print('q index: ', q_idx)
             a, b = q_points[q_idx]
+            # print(q_points)
             # a, b = quantization_to_ab(q_val)
             ab_img[i, j, :] = [a, b]
 
@@ -62,7 +66,7 @@ def one_hot_quantization(ab):
     return ab_one_hot
 
 
-def one_hot_q(ab_img, load_data=False, q=208):
+def one_hot_q(ab_img, load_data=False, q=246):
     # Need to turn matrix with a values and matrix with b values into list of values(a,b)
     if not load_data:
         ab_img = ab_img.T
@@ -71,7 +75,7 @@ def one_hot_q(ab_img, load_data=False, q=208):
     ab_one_hot = np.zeros((h, w, q))
     for i in range(h):
         for j in range(w):
-            #a, b = ab_img[i, j]
+            # a, b = ab_img[i, j]
             if not load_data:
                 closest_p, idx, dist = find_k_nearest_q(ab_img[i, j].cpu())
             else:
@@ -97,7 +101,7 @@ def space_to_points():
 
 
 def find_k_nearest_q(ab, k=1):
-    """ 
+    """
     INPUT:  The point ab. Wants point format [a,b] for ab.
             Optionally k, the number of points requested. Default 1.
     OUTPUT: The k closest point(s)
@@ -159,26 +163,20 @@ def create_q_list():
 
 if __name__ == '__main__':
 
-    arr = [[1, 2, 3], [4, 5, 6]]
+    # ab_vals = np.load('./processed_data/ab_values50000000.npy')
     # q_list = np.load('./quantized_space/q_list.npy')
-    # print(q_list[15])
-    # x = np.where(q_list[:, 0] == 6)
-    # y = np.where(q_list[:, 1] == 10)
-    # print(np.intersect1d(x, y))
-    # print(x, y)
 
-    # print(find_k_nearest_q([80, -55]))
+    # q_distrib_list = np.zeros((208, 1))
+    # print(q_list.shape)
 
-    # a = torch.randn(100, 208, 32, 32)
-    # # b = torch.randn(100, 32, 32, 208)
-    # sum = torch.sum(torch.sum(torch.sum(a, dim=1), dim=1), dim=1)
-    # sum2 = torch.sum(torch.sum(torch.sum(a, dim=3), dim=1), dim=1)
-    # print(sum)
-    # print(sum2)
-    # print(sum.shape)
+    # for ab in ab_vals:
+    #     a, b = ab
+    #     nearest, idx, dist = find_k_nearest_q([a, b])
+    #     # print(idx)
+    #     q_distrib_list[idx] += 1
 
-    # plt.save('/graphs/gamut2.png')
-    # plt.imshow(space)
-    # plt.show()
-    # print(space)
-    # print('Q should be', q)
+    # print(q_distrib_list)
+
+    space = np.load('./quantized_space/q_space.npy')
+    plt.imshow(space)
+    plt.show()

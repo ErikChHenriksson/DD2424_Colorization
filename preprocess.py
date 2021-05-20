@@ -40,7 +40,7 @@ def get_lab_data_train(train_rgb):
         l = lab[:, :, 0]
         ab = lab[:, :, 1:]
         one_hot = one_hot_q(ab, load_data=True)
-        training_labs.append([l, one_hot])
+        training_labs.append([l, one_hot.T])
 
     return training_labs
 
@@ -54,7 +54,7 @@ def get_lab_data_test(test_rgb):
         l = lab[:, :, 0]
         ab = lab[:, :, 1:]
         one_hot = one_hot_q(ab, load_data=True)
-        test_labs.append([l, one_hot])
+        test_labs.append([l, one_hot.T])
 
     return test_labs
 
@@ -85,26 +85,19 @@ if __name__ == '__main__':
     """ This main is used to create and save data from a downloaded dataset """
     data = 'cifar'
     train_rgb, test_rgb = get_orig_data(data)
-    training_labs = get_lab_data_train(train_rgb)
-    test_labs = get_lab_data_test(test_rgb)
+    num_train_samples = 1000  # Create mini subset of data set
+    train_subset = Subset(train_rgb, range(0, num_train_samples))
+    # test_subset = Subset(test_rgb, range(0, num_train_samples))
+    training_labs = get_lab_data_train(train_subset)
+    # test_labs = get_lab_data_test(test_subset)
     training_dataset = LabTrainingDataset(training_labs)
-    test_dataset = LabTestDataset(test_labs)
-
-    num_train_samples = 5000     # Create mini subset of data set
-    train_subset = Subset(training_dataset, np.arange(num_train_samples))
-    test_subset = Subset(test_dataset, np.arange(num_train_samples))
-    train_sampler = RandomSampler(train_subset)
-    test_sampler = RandomSampler(test_subset)
-    lab_training_loader = DataLoader(
-        train_subset, sampler=train_sampler, batch_size=100, shuffle=True, num_workers=2)
-    lab_test_loader = DataLoader(
-        test_sampler, sampler=train_sampler, batch_size=100, shuffle=True, num_workers=2)
-    """ lab_training_loader = DataLoader(training_dataset, batch_size=100,
+    # test_dataset = LabTestDataset(test_labs)
+    lab_training_loader = DataLoader(training_dataset, batch_size=100,
                                      shuffle=True, num_workers=2)
-    lab_test_loader = DataLoader(test_dataset, batch_size=100,
-                                 shuffle=True, num_workers=2) """
+    # lab_test_loader = DataLoader(test_dataset, batch_size=100,
+    #                              shuffle=True, num_workers=2)
 
     torch.save(lab_training_loader, 'dataloaders/' +
-               data+'_lab_training_loader_mini.pth')
-    torch.save(lab_test_loader, 'dataloaders/' +
-               data+'_lab_test_loader_mini.pth')
+               data+'_lab_training_loader_subset'+str(num_train_samples)+'.pth')
+    # torch.save(lab_test_loader, 'dataloaders/' +
+    #            data+'_lab_test_loader_mini.pth')

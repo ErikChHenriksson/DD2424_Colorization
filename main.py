@@ -30,29 +30,42 @@ def train_network(training_data):
     optimizer = optim.Adam(net.parameters(), lr=0.001)
     # criterion = nn.MSELoss()
 
-    epochs = 1
+    epochs = 8
     # batch_size = 100
 
     for epoch in range(epochs):
         running_loss = 0.0
         for i, data in enumerate(tqdm(training_data)):
-
-            data = data.to(device)
+            # data = data.to(device)
 
             # print(data.shape)
-            lab = split(data, [1, 2], dim=1)
-            l = lab[0]
-            ab = lab[1]
+            # lab = split(data, [1, 2], dim=1)
+            # l = lab[0]
+            # ab = lab[1]
 
             # print(l.shape)
             # print(ab.shape)
 
-            ab_onehot_list = [one_hot_q(v).T for v in ab]
+            # ab_onehot_list = [one_hot_q(v).T for v in ab]
 
-            ab_onehot = torch.Tensor(ab_onehot_list).to(device)
+            # ab_onehot = torch.Tensor(ab_onehot_list).to(device)
+
+            l = data[0]
+            ab_onehot = data[1]
+
+            # print(l.shape)
+            # print(ab_onehot.shape)
+
+            l = l.to(device)
+            ab_onehot = ab_onehot.to(device)
 
             l = Variable(l)
             ab_onehot = Variable(ab_onehot)
+
+            l = l.view(l.shape[0], -1, 32, 32)
+
+            # print(l.view(l.shape[0], -1, 32, 32).shape)
+            # print(ab_onehot.shape)
 
             out = net(l)
 
@@ -62,9 +75,9 @@ def train_network(training_data):
             loss.backward()
             optimizer.step()
 
-            if i == 5:
-                # print('loss is: ' + str(loss))
-                break
+            # if i == 5:
+            #     # print('loss is: ' + str(loss))
+            #     break
 
             running_loss += (loss % 100)
         print(f'Running loss is: {running_loss}')
@@ -97,7 +110,7 @@ def multi_class_cross_entropy_loss_torch(predictions, labels):
                                                      torch.log(predictions), dim=1), dim=1), dim=1))
 
     # loss = nn.CrossEntropyLoss(predictions, labels)
-    print(loss)
+    # print(loss)
 
     return loss
 
@@ -124,12 +137,15 @@ def load_data(data='cifar'):
 
 
 if __name__ == '__main__':
-    load_data()
-
+    # load_data()
+    data = 'cifar'
     # train_data = torch.load('./dataloaders/cifar_lab_training_loader.pth')
     # # test_data = torch.load('./dataloaders/cifar_lab_test_loader.pth')
 
     # # train_data = torch.load('./dataloaders/cifar_onehot_training.pth')
     # # test_data = torch.load('./dataloaders/cifar_lab_test_loader.pth')
 
-    # train_network(train_data)
+    train_data = torch.load('./dataloaders/' + data +
+                            '_lab_training_loader_mini.pth')
+
+    train_network(train_data)

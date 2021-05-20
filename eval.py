@@ -90,3 +90,7 @@ if __name__ == '__main__':
     test_data = torch.load('./dataloaders_eval/cifar_lab_test_loader.pth')
 
     save_output_imgs(model, test_data)
+
+    # a = torch.Tensor([1, 3, 5, 1, 11, 4])
+    # print(a)
+    # print(torch.argmax(a))
