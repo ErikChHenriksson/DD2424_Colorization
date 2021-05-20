@@ -34,13 +34,12 @@ def get_orig_data(data):
 
 def get_lab_data_train(train_rgb):
     training_labs = []
-
     for img, _label in tqdm(train_rgb):
         # training_rgbs.append(img)
         lab = color.rgb2lab(img.T)
         l = lab[:, :, 0]
         ab = lab[:, :, 1:]
-        one_hot = one_hot_q(ab)
+        one_hot = one_hot_q(ab, load_data=True)
         training_labs.append([l, one_hot])
 
     return training_labs
@@ -54,7 +53,7 @@ def get_lab_data_test(test_rgb):
         lab = color.rgb2lab(img.T)
         l = lab[:, :, 0]
         ab = lab[:, :, 1:]
-        one_hot = one_hot_q(ab)
+        one_hot = one_hot_q(ab, load_data=True)
         test_labs.append([l, one_hot])
 
     return test_labs
@@ -91,13 +90,15 @@ if __name__ == '__main__':
     training_dataset = LabTrainingDataset(training_labs)
     test_dataset = LabTestDataset(test_labs)
 
-    num_train_samples = 100     # Create mini subset of data set
+    num_train_samples = 5000     # Create mini subset of data set
     train_subset = Subset(training_dataset, np.arange(num_train_samples))
     test_subset = Subset(test_dataset, np.arange(num_train_samples))
     train_sampler = RandomSampler(train_subset)
     test_sampler = RandomSampler(test_subset)
-    lab_training_loader = DataLoader(train_subset, sampler=train_sampler, batch_size=10,shuffle=True, num_workers=2)
-    lab_test_loader = DataLoader(test_sampler, sampler=train_sampler, batch_size=10,shuffle=True, num_workers=2)
+    lab_training_loader = DataLoader(
+        train_subset, sampler=train_sampler, batch_size=100, shuffle=True, num_workers=2)
+    lab_test_loader = DataLoader(
+        test_sampler, sampler=train_sampler, batch_size=100, shuffle=True, num_workers=2)
     """ lab_training_loader = DataLoader(training_dataset, batch_size=100,
                                      shuffle=True, num_workers=2)
     lab_test_loader = DataLoader(test_dataset, batch_size=100,
@@ -105,4 +106,5 @@ if __name__ == '__main__':
 
     torch.save(lab_training_loader, 'dataloaders/' +
                data+'_lab_training_loader_mini.pth')
-    torch.save(lab_test_loader, 'dataloaders/'+data+'_lab_test_loader_mini.pth')
+    torch.save(lab_test_loader, 'dataloaders/' +
+               data+'_lab_test_loader_mini.pth')

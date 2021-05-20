@@ -12,7 +12,8 @@ from functions import *
 def load_data(data='cifar'):
     train_rgb, test_rgb = get_orig_data(data)
 
-    training_labs, test_labs = get_lab_data(train_rgb, test_rgb)
+    training_labs = get_lab_data_train(train_rgb)
+    test_labs = get_lab_data_train(test_rgb)
 
     training_dataset = LabTrainingDataset(training_labs)
     test_dataset = LabTestDataset(test_labs)
