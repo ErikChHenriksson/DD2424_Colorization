@@ -35,6 +35,7 @@ def quantization_to_ab(q_val):
 
 
 def q_distribution_to_ab(q_dist_img, q_points):
+    print(q_dist_img)
     q_dist_img = q_dist_img.T
     h, w, q = q_dist_img.shape
     ab_img = np.zeros((h, w, 2))
@@ -42,9 +43,6 @@ def q_distribution_to_ab(q_dist_img, q_points):
     for i in range(h):
         for j in range(w):
             q_idx = torch.argmax(q_dist_img[i, j])
-            print(q_dist_img[i, j])
-            print(torch.max(q_dist_img[i, j]))
-            print('q index: ', q_idx)
             a, b = q_points[q_idx]
             # print(q_points)
             # a, b = quantization_to_ab(q_val)
@@ -97,6 +95,17 @@ def space_to_points():
                 continue
             points.append([i*10-110, j*10-110])
     np.save('./quantized_space/q_points.npy', points)
+    return points
+
+def w_space_to_w_points():
+    w_space = np.load('./quantized_space/w_space.npy')
+    points = []
+    for i in range(w_space.shape[0]):
+        for j in range(w_space.shape[1]):
+            if w_space[i, j] == 0:
+                continue
+            points.append(w_space[i,j])
+    np.save('./quantized_space/w_points.npy', points)
     return points
 
 
@@ -160,9 +169,34 @@ def create_q_list():
     print(len(q_list))
     np.save('./quantized_space/q_list.npy', np.array(q_list))
 
+def create_w_space():
+    ab_vals = torch.load('./processed_data/ab_values5000.pt')
+    _lambda, _q = 0.5, 208
+    p = np.zeros((22,22))
+    for ab in ab_vals:
+        p[ab_to_quantization(ab)] += 1
+    p = softmax(p)
+    denom = (1-_lambda) * p + (_lambda / _q)
+    w = 1 / denom
+    w = softmax(w)
+    w[np.isnan(w)] = 0
+    print(w)
+    np.save('./quantized_space/p_space.npy', p)
+    np.save('./quantized_space/w_space.npy', w)
+    return w
+
+def softmax(x):
+    return np.exp(x) / np.sum(np.exp(x), axis=0)
+
+def prepare_rebalance():
+    create_w_space()
+    w_points = w_space_to_w_points()
+    print(w_points)
+    print(len(w_points))
+
+
 
 if __name__ == '__main__':
-
     # ab_vals = np.load('./processed_data/ab_values50000000.npy')
     # q_list = np.load('./quantized_space/q_list.npy')
 
@@ -177,6 +211,6 @@ if __name__ == '__main__':
 
     # print(q_distrib_list)
 
-    space = np.load('./quantized_space/q_space.npy')
+    """ space = np.load('./quantized_space/q_space.npy')
     plt.imshow(space)
-    plt.show()
+    plt.show() """
