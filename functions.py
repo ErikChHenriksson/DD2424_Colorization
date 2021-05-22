@@ -4,8 +4,9 @@ import math
 import matplotlib.pyplot as plt
 from scipy.spatial import KDTree
 
-q = 246  # This was the Q we got, right?
+#q = 246  # This was the Q we got, right?
 q_space = np.load('./quantized_space/q_space.npy')
+w_points = torch.from_numpy(np.load('./quantized_space/w_points.npy'))
 
 
 def getQ(pixels):
@@ -42,6 +43,7 @@ def q_distribution_to_ab(q_dist_img, q_points):
 
     for i in range(h):
         for j in range(w):
+            q_dist_img[i, j] += w_points
             q_idx = torch.argmax(q_dist_img[i, j])
             a, b = q_points[q_idx]
             # print(q_points)
@@ -97,16 +99,15 @@ def space_to_points():
     np.save('./quantized_space/q_points.npy', points)
     return points
 
-def w_space_to_w_points():
-    w_space = np.load('./quantized_space/w_space.npy')
+
+def x_space_to_x_points(space, name):
     points = []
-    for i in range(w_space.shape[0]):
-        for j in range(w_space.shape[1]):
-            if w_space[i, j] == 0:
-                continue
-            points.append(w_space[i,j])
-    np.save('./quantized_space/w_points.npy', points)
-    return points
+    for i in range(q_space.shape[0]):
+        for j in range(q_space.shape[1]):
+            if q_space[i, j] != 0:
+                points.append(space[i, j])
+    np.save('./quantized_space/'+name+'.npy', points)
+    return np.array(points)
 
 
 def find_k_nearest_q(ab, k=1):
@@ -169,34 +170,44 @@ def create_q_list():
     print(len(q_list))
     np.save('./quantized_space/q_list.npy', np.array(q_list))
 
-def create_w_space():
+def get_ab_pairs_quantified():
     ab_vals = torch.load('./processed_data/ab_values5000.pt')
-    _lambda, _q = 0.5, 208
-    p = np.zeros((22,22))
+    ab_pairs = np.zeros((22, 22))
     for ab in ab_vals:
-        p[ab_to_quantization(ab)] += 1
-    p = softmax(p)
+        ab_pairs[ab_to_quantization(ab)] += 1
+    np.save('./quantized_space/ab_pairs.npy', ab_pairs)
+    return ab_pairs
+
+
+def create_w_points():
+    _lambda, _q = 0.5, 208
+    ab_pairs = np.load('./quantized_space/ab_pairs.npy')
+    print('ab pairs', ab_pairs)
+    p = x_space_to_x_points(ab_pairs, 'p_points')
+    print('p_points', p)
+    #p = softmax(p)       # Try skipping first softmax ?
+    #print('P2', p)
     denom = (1-_lambda) * p + (_lambda / _q)
     w = 1 / denom
+    print('W1', w)
     w = softmax(w)
-    w[np.isnan(w)] = 0
-    print(w)
-    np.save('./quantized_space/p_space.npy', p)
-    np.save('./quantized_space/w_space.npy', w)
+    print('W2', w)
+    np.save('./quantized_space/p_points.npy', p)
+    np.save('./quantized_space/w_points.npy', w)
     return w
 
+
 def softmax(x):
-    return np.exp(x) / np.sum(np.exp(x), axis=0)
-
-def prepare_rebalance():
-    create_w_space()
-    w_points = w_space_to_w_points()
-    print(w_points)
-    print(len(w_points))
-
+    # save typing...
+    e_x = np.exp(x - np.max(x))
+    return e_x / e_x.sum(axis=0)
 
 
 if __name__ == '__main__':
+    print(define_in_gamut(torch.load('./processed_data/ab_values5000.pt')))
+    get_ab_pairs_quantified()
+    create_w_points()
+    # w_space_to_w_points()
     # ab_vals = np.load('./processed_data/ab_values50000000.npy')
     # q_list = np.load('./quantized_space/q_list.npy')
 
