@@ -1,3 +1,4 @@
+import pickle
 from torchvision import transforms, datasets
 from torch.utils.data import Dataset, DataLoader, Subset, RandomSampler
 from skimage import color
@@ -81,18 +82,17 @@ class LabTestDataset(Dataset):
         return self._test_labs[index]
 
 
-if __name__ == '__main__':
-    """ This main is used to create and save data from a downloaded dataset """
+def create_mini_set():
     data = 'cifar'
     train_rgb, test_rgb = get_orig_data(data)
-    num_train_samples = 1000  # Create mini subset of data set
+    num_train_samples = 100  # Create mini subset of data set
     train_subset = Subset(train_rgb, range(0, num_train_samples))
     # test_subset = Subset(test_rgb, range(0, num_train_samples))
     training_labs = get_lab_data_train(train_subset)
     # test_labs = get_lab_data_test(test_subset)
     training_dataset = LabTrainingDataset(training_labs)
     # test_dataset = LabTestDataset(test_labs)
-    lab_training_loader = DataLoader(training_dataset, batch_size=100,
+    lab_training_loader = DataLoader(training_dataset, batch_size=10,
                                      shuffle=True, num_workers=2)
     # lab_test_loader = DataLoader(test_dataset, batch_size=100,
     #                              shuffle=True, num_workers=2)
@@ -101,3 +101,39 @@ if __name__ == '__main__':
                data+'_lab_training_loader_subset'+str(num_train_samples)+'.pth')
     # torch.save(lab_test_loader, 'dataloaders/' +
     #            data+'_lab_test_loader_mini.pth')
+
+
+def save_np_data(data_rgb, size, q=246):
+    num_samp = len(data_rgb)
+    _, h, w = data_rgb[0][0].shape
+
+    input_data = []
+    target_data = []
+
+    for i in tqdm(range(size)):
+        img = data_rgb[i][0]
+        lab = color.rgb2lab(img.T)
+        l = lab[:, :, 0]
+        ab = lab[:, :, 1:]
+        one_hot = one_hot_q(ab, load_data=True)
+
+        l = np.array(l).T
+        one_hot = np.array(one_hot).T
+        input_data.append(l)
+        target_data.append(one_hot)
+
+    np.save(f'./data_np/train_X{size}.npy', input_data)
+    np.save(f'./data_np/train_y{size}.npy', target_data)
+    return
+
+
+if __name__ == '__main__':
+    data = 'cifar'
+    train_rgb, test_rgb = get_orig_data(data)
+    save_np_data(train_rgb, 10000)
+
+    # create_mini_set()
+
+    # input_data = np.load('./data_np/train_data.npy', allow_pickle=True)
+    # print(input_data[0][0].shape)
+    # print(input_data[0][1].shape)

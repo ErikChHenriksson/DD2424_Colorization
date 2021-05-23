@@ -132,6 +132,7 @@ dmypy.json
 /data
 /processed_data
 /ImageNet_dog
+/data_np
 
 # imgs
 /imgs

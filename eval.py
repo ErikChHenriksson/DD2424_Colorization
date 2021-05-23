@@ -33,6 +33,7 @@ def load_data(data='cifar'):
 
 def save_output_imgs(model, test_data):
     q_points = np.load('./quantized_space/q_points.npy')
+    model.eval()
 
     case, num_cases = 1, 10
     for i, data in enumerate(test_data):
@@ -50,10 +51,13 @@ def save_output_imgs(model, test_data):
         l = l[0]  # get the first image
         l = Variable(l)
 
-        # predict ab
-        q_dist = model(l)
+        with torch.no_grad():
+
+            # predict ab
+            q_dist = model(l)
 
         ab = q_distribution_to_ab(q_dist[0], q_points)
+        # ab = annealed_q_to_ab(q_dist[0], q_points)
         ab_t = torch.Tensor(ab).T.view(1, 2, 32, 32)
 
         print('colormax', torch.max(ab_t))

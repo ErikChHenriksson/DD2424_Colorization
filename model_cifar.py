@@ -78,7 +78,7 @@ class Colorizer(nn.Module):
             Conv2d(32, 32, kernel_size=3, padding=1),
             ReLU(inplace=True),
             # TO COLOR PROBABILITIES
-            Conv2d(32, 208, kernel_size=3, padding=0)]
+            Conv2d(32, 246, kernel_size=3, padding=0)]
 
         self._model1 = Sequential(*model1)
         self._model2 = Sequential(*model2)
@@ -90,7 +90,7 @@ class Colorizer(nn.Module):
         self._model8 = Sequential(*model8)
 
         self._softmax = Softmax(dim=1)
-        self._final = Conv2d(208, 2, kernel_size=1,
+        self._final = Conv2d(246, 2, kernel_size=1,
                              stride=1, padding=0, dilation=1, bias=False)
         self._up = Upsample(scale_factor=1, mode='bilinear')
 
