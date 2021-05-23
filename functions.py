@@ -43,7 +43,7 @@ def q_distribution_to_ab(q_dist_img, q_points):
 
     for i in range(h):
         for j in range(w):
-            q_dist_img[i, j] += w_points
+            q_dist_img[i, j] *= w_points
             q_idx = torch.argmax(q_dist_img[i, j])
             a, b = q_points[q_idx]
             # print(q_points)
@@ -179,22 +179,35 @@ def get_ab_pairs_quantified():
     return ab_pairs
 
 
-def create_w_points():
+""" def create_w_points():
     _lambda, _q = 0.5, 208
     ab_pairs = np.load('./quantized_space/ab_pairs.npy')
     print('ab pairs', ab_pairs)
     p = x_space_to_x_points(ab_pairs, 'p_points')
-    print('p_points', p)
+    print('p_points', p, p[85])
     #p = softmax(p)       # Try skipping first softmax ?
-    #print('P2', p)
+    #print('P2', p, p[85])
     denom = (1-_lambda) * p + (_lambda / _q)
     w = 1 / denom
-    print('W1', w)
+    print('W1', w, w[85])
     w = softmax(w)
-    print('W2', w)
+    print('W2', w, w[85])
     np.save('./quantized_space/p_points.npy', p)
     np.save('./quantized_space/w_points.npy', w)
-    return w
+    return w """
+
+def create_w_points():
+    _lambda, _q = 0.5, 208
+    ab_pairs = torch.from_numpy(np.load('./quantized_space/ab_pairs.npy'))
+    ab_points = torch.from_numpy(x_space_to_x_points(ab_pairs, 'ab_points'))
+    uniform = torch.zeros_like(ab_pairs)
+    uniform[ab_pairs > 0] = 1 / (ab_pairs > 0).sum().type_as(uniform)
+    uniform_points = x_space_to_x_points(uniform, 'uniform_points')
+    w_points = 1 / ((1 - _lambda) * ab_points + _lambda * uniform_points)
+    w_points /= torch.sum(ab_points * w_points)
+    print(w_points)
+    print(w_points.size())
+    np.save('./quantized_space/w_points.npy', w_points)
 
 
 def softmax(x):
@@ -204,8 +217,8 @@ def softmax(x):
 
 
 if __name__ == '__main__':
-    print(define_in_gamut(torch.load('./processed_data/ab_values5000.pt')))
-    get_ab_pairs_quantified()
+    #print(define_in_gamut(torch.load('./processed_data/ab_values5000.pt')))
+    #get_ab_pairs_quantified()
     create_w_points()
     # w_space_to_w_points()
     # ab_vals = np.load('./processed_data/ab_values50000000.npy')
