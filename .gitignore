@@ -135,7 +135,6 @@ dmypy.json
 /data_np
 
 # imgs
-/imgs
 
 # Dataloaders
 /dataloaders
